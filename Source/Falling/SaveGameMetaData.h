@@ -14,12 +14,12 @@ struct FSavedGameMetaData
 	TArray<int32> UserIndexes;
 	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
 	TArray<FString> UserNames;
-	/*UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
-	FRotator Rotation;
 	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
-	FString WeaponName;
+	TArray<FString> CreatedDate;
 	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
-	bool NeedsReload;*/
+	TArray<int32> LevelsCompleted;
+	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
+	TArray<FString> LevelsCompletedString;
 };
 
 /**

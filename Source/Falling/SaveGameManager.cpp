@@ -5,17 +5,21 @@
 #include "Kismet/GameplayStatics.h"
 #include "FallingSaveGame.h"
 #include "SaveGameMetaData.h"
+#include "Misc/DateTime.h"
 
 
 USaveGameManager::USaveGameManager()
 {
-	/* Used to clear the MetaData
-	if (MetaDataInstance = Cast<USaveGameMetaData>(UGameplayStatics::LoadGameFromSlot(TEXT("MetaData"), 0)))
+	// Used to clear the MetaData
+	/*if (MetaDataInstance = Cast<USaveGameMetaData>(UGameplayStatics::LoadGameFromSlot(TEXT("MetaData"), 0)))
 	{
 		MetaDataInstance->MetaData.UserIndexes.Empty();
 		MetaDataInstance->MetaData.UserNames.Empty();
+		MetaDataInstance->MetaData.CreatedDate.Empty();
+		MetaDataInstance->MetaData.LevelsCompleted.Empty();
+		MetaDataInstance->MetaData.LevelsCompletedString.Empty();
 		UGameplayStatics::SaveGameToSlot(MetaDataInstance, TEXT("MetaData"), 0);
-	} */
+	}*/
 	
 
 	if (MetaDataInstance = Cast<USaveGameMetaData>(UGameplayStatics::LoadGameFromSlot(TEXT("MetaData"), 0)))
@@ -39,7 +43,10 @@ USaveGameManager::USaveGameManager()
 	}
 }
 
-// saves and loads game
+/*
+* When this function is called, we're not only saving and returning the requested FallingSaveGame
+*  but setting it (in the FallingGameInstance) as the current game being played.
+*/
 UFallingSaveGame* USaveGameManager::SaveNewGame(FString GameName)
 {
 	if (UFallingSaveGame* SaveGameInstance = Cast<UFallingSaveGame>(UGameplayStatics::CreateSaveGameObject(UFallingSaveGame::StaticClass())))
@@ -61,17 +68,14 @@ UFallingSaveGame* USaveGameManager::SaveNewGame(FString GameName)
 	return nullptr;
 }
 
-// Assume we're being passed the real UserIndex, aka, a 1-based value
+/*
+* Note that UserIndex is a 1-based value as it represents the slot the game is actually stored in.
+* When this function is called, we're not only returning the requested FallingSaveGame but setting it
+*  (in the FallingGameInstance) as the current game being played.
+* TODO change the name of this function to LoadSaveGame
+*/
 UFallingSaveGame* USaveGameManager::GetSaveGame(int32 UserIndex)
 {
-	// bounds checking
-	/*if (UserIndex > MetaDataInstance->Num())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("In GetSaveGame(): Requested game to load is out of bounds of MetaDataInstance arrays. Requested: %i | Max array size: %i"), UserIndex, MetaDataInstance->Num());
-		return nullptr;
-	}*/
-
-	// load the current save game and return it
 	TArray<FString> CurrentRecord = GetMetaDataRecord(UserIndex - 1);
 	if (CurrentRecord.Num() > 0)
 	{
@@ -95,64 +99,49 @@ UFallingSaveGame* USaveGameManager::GetSaveGame(int32 UserIndex)
 // We assume here that the game to update is the currently loaded game. If this is a false assumption the code will need to change
 void USaveGameManager::UpdateSaveGame(UFallingSaveGame* Game)
 {
-	// bounds checking
-	/*if (CurrentSaveSlot > MetaDataInstance->Num())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("In USaveGameManager::UpdateSaveGame(): Requested saved game is out of bounds of MetaDataInstance arrays. Requested: %i | Max array size: %i"), CurrentSaveSlot, MetaDataInstance->Num());
-		return;
-	}*/
-
-	/*
-	// load the current save game based on CurrentSaveSlot
 	CurrentSave = Game;
-	//CurrentSave->UserIndex = Game->UserIndex;
-	//CurrentSave->SaveSlotName = Game->SaveSlotName;
-	//CurrentSave->CreatedDate = Game->CreatedDate;
-	//CurrentSave->LevelsCompleted = Game->LevelsCompleted;
-	// go through elements of Game and update them
-	if (!UGameplayStatics::SaveGameToSlot(Game, CurrentSave->SaveSlotName, CurrentSave->UserIndex))
+	if (!UGameplayStatics::SaveGameToSlot(Game, CurrentSave->SaveGameData.SaveSlotName, CurrentSave->SaveGameData.UserIndex))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("In UpdateSaveGame(): Something went wrong updating the save game"));
 	}
 
 	UpdateMetaData(Game);
-	*/
 }
 
-// This is called from the UserWidget so it will input a 0-based array. No conversion necessary
+/*
+* This is called from the UserWidget so it will input a 0-based array. No conversion necessary.
+* This doesn't return the # of levels, just the associated string. It could, though, but right now
+*  it doesn't need to.
+*/
 TArray<FString> USaveGameManager::GetMetaDataRecord(int32 Index)
 {
-	UE_LOG(LogTemp, Warning, TEXT("There are %i records"), NumSaveGames());
 	TArray<FString> ReturnArray;
 	if (Index >= MetaDataInstance->MetaData.UserIndexes.Num()) return ReturnArray;
 	FString UIndex("");
 	UIndex.AppendInt(MetaDataInstance->MetaData.UserIndexes[Index]);
 
-	ReturnArray.Add(UIndex);
+	//ReturnArray.Add(UIndex);
+	ReturnArray.Add(FString(*UIndex));
 	ReturnArray.Add(MetaDataInstance->MetaData.UserNames[Index]);
-	//ReturnArray.Add(MetaDataInstance->MetaData.CreatedDate[OurIndex]);
-	//ReturnArray.Add(MetaDataInstance->MetaData.LevelsCompletedString[OurIndex]);
+	ReturnArray.Add(MetaDataInstance->MetaData.CreatedDate[Index]);
+	ReturnArray.Add(MetaDataInstance->MetaData.LevelsCompletedString[Index]);
 
 	return ReturnArray;
 }
 
+/*
+* Note: doesn't update the CreatedDate on the basis that the object is already created.
+*/
 void USaveGameManager::UpdateMetaData(UFallingSaveGame* Game)
 {
-	/*
 	if (MetaDataInstance)
 	{
+		int32 Index = Game->SaveGameData.UserIndex - 1;
+		MetaDataInstance->MetaData.UserNames[Index] = Game->SaveGameData.SaveSlotName;
+		MetaDataInstance->MetaData.LevelsCompleted[Index] = Game->SaveGameData.LevelsCompleted;
+		// TODO should probably be a function
+		MetaDataInstance->MetaData.LevelsCompletedString[Index] = FString(TEXT("Completed %i Levels"), Game->SaveGameData.LevelsCompleted);
 
-		UE_LOG(LogTemp, Warning, TEXT("In USaveGameMetaData::UpdateRecord()"));
-		// update the info that it needs
-		UserIndexes[Game->UserIndex - 1] = Game->UserIndex;
-		UserNames[Game->UserIndex - 1] = &Game->SaveSlotName;
-		//LevelsCompleted[OurIndex] = Game->LevelsCompleted;
-		//FString CompletedString = FString(TEXT("Completed %i Levels"), LevelsCompleted[OurIndex]);
-		//LevelsCompletedString[OurIndex] = &CompletedString;
-
-		// TODO does this work?
-		MetaDataInstance->MetaData.UserNames = UserNames;
-		MetaDataInstance->MetaData.UserIndexes = UserIndexes;
 		if (!UGameplayStatics::SaveGameToSlot(MetaDataInstance, TEXT("MetaData"), 0))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("In USaveGameManager::UpdateMetaData(): Something went wrong saving the metadata"));
@@ -162,15 +151,21 @@ void USaveGameManager::UpdateMetaData(UFallingSaveGame* Game)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("In USaveGameManager::UpdateMetaData(): Something went wrong updating the meta data"));
 	}
-	*/
 }
 
+/*
+* I've decided to get the DateTime and then store it as a string for no particular reason.
+* If one wanted to store it as an FDateTime and ToString() it in the Getter function, that works too.
+*/
 void USaveGameManager::AddMetaDataRecord(UFallingSaveGame* Game)
 {
 	if (MetaDataInstance)
 	{
 		MetaDataInstance->MetaData.UserNames.Add(Game->SaveGameData.SaveSlotName);
 		MetaDataInstance->MetaData.UserIndexes.Add(Game->SaveGameData.UserIndex);
+		MetaDataInstance->MetaData.CreatedDate.Add(FDateTime::Today().ToString(TEXT("%Y-%m-%d")));
+		MetaDataInstance->MetaData.LevelsCompleted.Add(0);
+		MetaDataInstance->MetaData.LevelsCompletedString.Add(TEXT("Completed 0 Levels"));
 
 		if (!UGameplayStatics::SaveGameToSlot(MetaDataInstance, TEXT("MetaData"), 0))
 		{
@@ -178,7 +173,7 @@ void USaveGameManager::AddMetaDataRecord(UFallingSaveGame* Game)
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("In USaveGameManager::AddMetaDataRecord(): Successfully saved the metadata; loading new one now"));
+			//UE_LOG(LogTemp, Warning, TEXT("In USaveGameManager::AddMetaDataRecord(): Successfully saved the metadata; loading new one now"));
 			MetaDataInstance = Cast<USaveGameMetaData>(UGameplayStatics::LoadGameFromSlot(TEXT("MetaData"), 0));
 		}
 	}

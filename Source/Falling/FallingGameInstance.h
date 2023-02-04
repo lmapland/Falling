@@ -26,9 +26,17 @@ public:
 	void SaveNewGame(FString GameName);
 
 	UFUNCTION(BlueprintCallable)
-	void GetSaveGame(int32 UserIndex);
+	void GetSaveGame(int32 UserIndex); // TODO change name to LoadSaveGame
+
+	UFUNCTION(BlueprintCallable)
+	FString GetUserName();
 
 private:
 	USaveGameManager* SaveManager;
 	UFallingSaveGame* CurrentSave;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE UFallingSaveGame* GetCurrentSave() const { return CurrentSave; };
+	
 };

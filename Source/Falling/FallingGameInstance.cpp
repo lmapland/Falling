@@ -3,6 +3,7 @@
 
 #include "FallingGameInstance.h"
 #include "SaveGameManager.h"
+#include "FallingSaveGame.h"
 
 /*
 * This GameInstance gets instantiated on editor startup
@@ -49,6 +50,10 @@ void UFallingGameInstance::GetSaveGame(int32 UserIndex)
 void UFallingGameInstance::SetupSaveManager()
 {
 	UE_LOG(LogTemp, Warning, TEXT("In UFallingGameInstance::SetupSaveManager(): About to initialize the SaveManager"));
-	//SaveManager = CreateDefaultSubobject<SaveGameManager>(TEXT("Save Manager"));
 	SaveManager = NewObject<USaveGameManager>(USaveGameManager::StaticClass());
+}
+
+FString UFallingGameInstance::GetUserName()
+{
+	return CurrentSave->SaveGameData.SaveSlotName;
 }

@@ -18,7 +18,8 @@ struct FRegularSaveGame
 	FString CreatedDate;
 	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
 	int32 LevelsCompleted;
-	/* this is the list of all levels in the gameand the word that represents their state to the user
+	/*
+	 * this is the list of all levels in the game and the word that represents their state to the user
 	 * <1, "Completed>,<2, "Open">,<3, "Not Available">; stuff like that.
 	 * It allows levels to be completed out of order, like level 4 might be the bonus challenge level that the user has Open.
 	 * So the user has completed 4 levels, but they could be levels 1,2,3,5 or 1,2,3,4
@@ -41,22 +42,4 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = Basic)
 	FRegularSaveGame SaveGameData;
-
-	/*
-	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
-	int32 UserIndex = -1;
-
-	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
-	FString SaveSlotName;
-
-	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
-	FString CreatedDate = TEXT("");
-
-	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
-	int32 LevelsCompleted = 0;
-
-	
-	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
-	TMap<int32, FString> LevelMap;
-	*/
 };
